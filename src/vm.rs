@@ -51,11 +51,7 @@ impl VirtualMachine {
         loop {
             let instr = self.fetch_instruction();
             self.handle_instruction(instr);
-            self.handle_interrupts();
         }
-    }
-    fn handle_interrupts(&mut self) {
-        // TODO
     }
     fn fetch_instruction(&mut self) -> Instruction {
         let pc = self.program.current();
