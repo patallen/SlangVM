@@ -23,7 +23,7 @@ impl Instruction {
             Some(val) => format!("{}", val),
             None => format!(""),
         };
-        println!("{:04X}: {:04X} -> {:?} {}\t{:?}", pc, self.code, self.opcode, value, stack);
+        // println!("{:04X}: {:04X} -> {:?} {}\t{:?}", pc, self.code, self.opcode, value, stack);
     }
 }
 pub struct VirtualMachine {
