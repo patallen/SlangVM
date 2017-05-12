@@ -70,10 +70,7 @@ impl Opcode {
             0xA0 => Opcode::Ret,
             0xE0 => Opcode::Print,
             0xF0 => Opcode::Halt,
-            _ => panic!("{:04X} is not a valid opcode.")
+            _ => panic!("{:04X} is not a valid opcode.", value)
         }
     }
 }
-
-
-
