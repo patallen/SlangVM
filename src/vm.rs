@@ -95,6 +95,7 @@ impl VirtualMachine {
             Opcode::RelJmpNe => self.rel_jmp_ne(instr.value.unwrap()),
             Opcode::RelJmpGt => self.rel_jmp_gt(instr.value.unwrap()),
             Opcode::RelJmpLt => self.rel_jmp_lt(instr.value.unwrap()),
+            Opcode::Jmp      => self.jmp(instr.value.unwrap()),
             Opcode::Ret      => self.ret(),
             Opcode::Print    => self.print(),
             Opcode::Halt     => self.halt(),
