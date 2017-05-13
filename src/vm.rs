@@ -257,8 +257,11 @@ fn test_vm_new() {
 
 #[test]
 fn test_fetch_instruction() {
-    let mut vm = VirtualMachine::new(vec![0x00, 0x01, 0xFF]);
+    let mut vm = VirtualMachine::new(vec![0x10, 0xFF, 0xFF, 0xFF, 0xFF]);
     let inst = vm.fetch_instruction();
+    assert!(inst.code == 0x10);
+    assert!(inst.value.unwrap() == 0xFFFFFFFF);
+}
 
 #[test]
 fn test_swap_instruction() {
