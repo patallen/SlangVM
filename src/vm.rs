@@ -75,6 +75,7 @@ impl VirtualMachine {
             Opcode::GStore   => self.store_global(instr.value.unwrap()),
             Opcode::Call     => self.call(instr.value.unwrap()),
             Opcode::Dup      => self.dup(),
+            Opcode::Swap     => self.swap(),
             Opcode::Add      => self.add(),
             Opcode::Sub      => self.sub(),
             Opcode::Mul      => self.mul(),
@@ -240,6 +241,12 @@ impl VirtualMachine {
         let todupe = self.stack.peek();
         self.stack.push(todupe);
     }
+    fn swap(&mut self) {
+        let s1 = self.stack.pop();
+        let s2 = self.stack.pop();
+        self.stack.push(s1);
+        self.stack.push(s2);
+    }
 }
 
 #[test]
@@ -252,5 +259,14 @@ fn test_vm_new() {
 fn test_fetch_instruction() {
     let mut vm = VirtualMachine::new(vec![0x00, 0x01, 0xFF]);
     let inst = vm.fetch_instruction();
-    assert!(inst.code == 1);
+
+#[test]
+fn test_swap_instruction() {
+    let mut vm = VirtualMachine::new(vec![]);
+    vm.stack.push(0x01);
+    vm.stack.push(0x02);
+    vm.swap();
+
+    assert!(vm.stack.pop() == 1);
+    assert!(vm.stack.pop() == 2);
 }

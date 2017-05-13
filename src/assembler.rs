@@ -132,6 +132,7 @@ fn match_instruction(inst: String) -> ASMCont {
         "g_store"     => ASMCont {code: 0x15, byte_count: 4, lbl: true},
         "call"        => ASMCont {code: 0x18, byte_count: 4, lbl: true},
         "dup"         => ASMCont {code: 0x30, byte_count: 0, lbl: false},
+        "swap"        => ASMCont {code: 0x31, byte_count: 0, lbl: false},
         "add"         => ASMCont {code: 0x40, byte_count: 0, lbl: false},
         "sub"         => ASMCont {code: 0x41, byte_count: 0, lbl: false},
         "mul"         => ASMCont {code: 0x42, byte_count: 0, lbl: false},
