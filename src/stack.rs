@@ -17,8 +17,8 @@ impl Stack {
     pub fn pop(&mut self) -> u32 {
         self.space.pop().unwrap()
     }
-    pub fn peek(&self) -> &u32 {
-        self.space.last().unwrap()
+    pub fn peek(&mut self) -> u32 {
+        *self.space.last().unwrap()
     }
 }
 
@@ -57,7 +57,7 @@ fn test_stack_peek() {
     let mut stack = Stack::new();
     stack.space.push(111);
     stack.space.push(222);
-    assert!(*stack.peek() == 222);
+    assert!(stack.peek() == 222);
     assert!(stack.space.len() == 2);
     assert!(stack.space[1] == 222)
 }
