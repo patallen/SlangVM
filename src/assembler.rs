@@ -4,11 +4,6 @@ use std::io::prelude::*;
 
 use std::collections::BTreeMap;
 
-// pub fn load_bytecode(filepath: &str) -> Vec<u8> {
-//     let mut file = File::open(filepath);
-//     let mut buffer: Vec<u8> = Vec::new();
-//     let bytecode = file.read_to_end(&buffer);
-// }
 
 #[derive(Debug)]
 struct SourceLine {
@@ -59,7 +54,9 @@ impl Assembler {
     pub fn assemble(&mut self) -> Vec<u8> {
         let mut bytecode: Vec<u8> = Vec::new();
         self.record_labels();
+        println!("{:?}", self.symbols);
         for sl in &self.source {
+            println!("{:?}", sl);
             let mut bytes = self.parse_line(sl, bytecode.len());
             bytecode.append(&mut bytes);
         }
@@ -91,8 +88,13 @@ impl Assembler {
                 if instruction.lbl == true {
                     let mut tmp = match self.symbols.get(&operand) {
                         Some(value) => {
-                            if act2.contains("rel") {
-                                let rel = -((addr as i32) - (*value as i32));
+                            if act2.contains("rel") || act2 == "call" {
+                                let mut rel: i32 = 0;
+                                if act2 == "call" {
+                                    rel = *value as i32;
+                                } else {
+                                    rel = -((addr as i32) - (*value as i32));
+                                }
                                 val_to_bytes(rel)
                             } else {
                                 val_to_bytes(*value as i32)
@@ -105,6 +107,7 @@ impl Assembler {
                     panic!("Instruction {:02X} cannot use a label.", instruction.code);
                 }
             } else {
+                println!("What:?");
                 let mut tmp = match operand.parse() {
                     Ok(val) => val_to_bytes(val),
                     Err(_) => panic!("Error, bitch.")
@@ -130,7 +133,8 @@ fn match_instruction(inst: String) -> ASMCont {
         "g_load"      => ASMCont {code: 0x12, byte_count: 4, lbl: true},
         "store"       => ASMCont {code: 0x14, byte_count: 4, lbl: true},
         "g_store"     => ASMCont {code: 0x15, byte_count: 4, lbl: true},
-        "call"        => ASMCont {code: 0x18, byte_count: 4, lbl: false},
+        "call"        => ASMCont {code: 0x18, byte_count: 4, lbl: true},
+        "dup"         => ASMCont {code: 0x30, byte_count: 0, lbl: false},
         "add"         => ASMCont {code: 0x40, byte_count: 0, lbl: false},
         "sub"         => ASMCont {code: 0x41, byte_count: 0, lbl: false},
         "mul"         => ASMCont {code: 0x42, byte_count: 0, lbl: false},
@@ -160,15 +164,6 @@ fn match_instruction(inst: String) -> ASMCont {
     }
 }
 
-pub fn assemble_code(filepath: &str) -> Vec<u8> {
-    let lines = read_lines(filepath);
-    let mut bytes: Vec<u8> = Vec::new();
-    for line in lines {
-        println!("{}", line);
-        bytes.append(&mut parse_line(line))
-    }
-    bytes
-}
 pub fn read_lines(filepath: &str) -> Vec<String>{
     let mut file = File::open(filepath).unwrap();
     let mut source = String::new();
@@ -179,24 +174,6 @@ pub fn read_lines(filepath: &str) -> Vec<String>{
         rv.push(r[0].trim().to_string());
     }
     rv
-}
-
-fn parse_line(line: String) -> Vec<u8> {
-    match &*line {
-        "" => Vec::new(),
-        _ => {
-            println!("Line: {:?}", line);
-            let parts: Vec<&str> = line.split(' ').collect();
-            println!("Parts: {:?}", parts);
-            let ac = match_instruction(parts[0].to_string());
-            let mut bytes: Vec<u8> = vec![ac.code];
-            if ac.byte_count > 0 {
-                let val: i32 = parts[1].parse().unwrap();
-                bytes.append(&mut val_to_bytes(val));
-            }
-            bytes
-        }
-    }
 }
 
 fn val_to_bytes(value: i32) -> Vec<u8> {

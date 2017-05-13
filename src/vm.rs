@@ -23,7 +23,7 @@ impl Instruction {
             Some(val) => format!("{}", val),
             None => format!(""),
         };
-        // println!("{:04X}: {:04X} -> {:?} {}\t{:?}", pc, self.code, self.opcode, value, stack);
+        // println!("{:04X}: {:04X} -> {:?} {}\t{:?}", pc, self.code as i32, self.opcode, value, stack);
     }
 }
 pub struct VirtualMachine {
@@ -74,6 +74,7 @@ impl VirtualMachine {
             Opcode::Store    => self.store_local(instr.value.unwrap()),
             Opcode::GStore   => self.store_global(instr.value.unwrap()),
             Opcode::Call     => self.call(instr.value.unwrap()),
+            Opcode::Dup      => self.dup(),
             Opcode::Add      => self.add(),
             Opcode::Sub      => self.sub(),
             Opcode::Mul      => self.mul(),
@@ -121,17 +122,18 @@ impl VirtualMachine {
         self.locals[addr as usize] = value;
     }
     fn call(&mut self, addr: u32) {
-        // TODO
-        println!("Call not implemented");
+        let pc = self.program.current() as u32;
+        self.callstack.push(pc);
+        self.program.jump_to(addr as usize);
     }
     fn add(&mut self) {
-        let s1 = self.stack.pop() as f32;
-        let s2 = self.stack.pop() as f32;
-        self.stack.push((s1 + s2) as u32);
+        let s1 = self.stack.pop() as u32;
+        let s2 = self.stack.pop() as u32;
+        self.stack.push((s1.wrapping_add(s2)) as u32);
     }
     fn sub(&mut self) {
-        let s1 = self.stack.pop() as f32;
         let s2 = self.stack.pop() as f32;
+        let s1 = self.stack.pop() as f32;
         self.stack.push((s1 - s2) as u32);
     }
     fn mul(&mut self) {
@@ -224,15 +226,19 @@ impl VirtualMachine {
         self.program.jump_to(addr as usize)
     }
     fn ret(&mut self) {
-        // TODO
-        println!("Ret not implemented");
+        let addr = self.callstack.pop();
+        self.program.jump_to(addr as usize);
     }
     fn halt(&mut self) {
         std::process::exit(1);
     }
     fn print(&mut self) {
-        let s = *self.stack.peek() as f32;
+        let s = self.stack.peek() as f32;
         println!("{}", s);
+    }
+    fn dup(&mut self) {
+        let todupe = self.stack.peek();
+        self.stack.push(todupe);
     }
 }
 
