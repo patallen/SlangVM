@@ -54,9 +54,7 @@ impl Assembler {
     pub fn assemble(&mut self) -> Vec<u8> {
         let mut bytecode: Vec<u8> = Vec::new();
         self.record_labels();
-        println!("{:?}", self.symbols);
         for sl in &self.source {
-            println!("{:?}", sl);
             let mut bytes = self.parse_line(sl, bytecode.len());
             bytecode.append(&mut bytes);
         }
@@ -107,7 +105,6 @@ impl Assembler {
                     panic!("Instruction {:02X} cannot use a label.", instruction.code);
                 }
             } else {
-                println!("What:?");
                 let mut tmp = match operand.parse() {
                     Ok(val) => val_to_bytes(val),
                     Err(_) => panic!("Error, bitch.")
