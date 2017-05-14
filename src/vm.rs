@@ -1,37 +1,17 @@
 use std;
 
-use stack::Stack;
+use stack::{Stack, CallStack, CallFrame};
+use opcode::Opcode;
 use program::Program;
-use instruction::Opcode;
+use instruction::Instruction;
 
-#[derive(Debug)]
-struct Instruction {
-    code: u8,
-    opcode: Opcode,
-    value: Option<u32>,
-}
-impl Instruction {
-    fn new(code: u8, value: Option<u32>) -> Self {
-        Instruction {
-            code: code,
-            opcode: Opcode::from_value(code),
-            value: value,
-        }
-    }
-    pub fn trace(&self, pc: usize, stack: &Stack) {
-        let value = match self.value {
-            Some(val) => format!("{}", val),
-            None => format!(""),
-        };
-        // println!("{:04X}: {:04X} -> {:?} {}\t{:?}", pc, self.code as i32, self.opcode, value, stack);
-    }
-}
+
 pub struct VirtualMachine {
     stack: Stack,
-    locals: [u32; 0xFF],
-    callstack: Stack,
+    callstack: CallStack,
     program: Program,
     mem: [u32; 0xFFFF],
+    current_frame: CallFrame
 }
 
 
@@ -41,10 +21,10 @@ impl VirtualMachine {
         program.load_bytes(source);
         return VirtualMachine {
             stack: Stack::new(),
-            callstack: Stack::new(),
+            callstack: CallStack::new(),
             program: program,
             mem: [0; 0xFFFF],
-            locals: [0; 0xFF]
+            current_frame: CallFrame::new(0),
         }
     }
     pub fn run(&mut self) {
@@ -56,13 +36,12 @@ impl VirtualMachine {
     fn fetch_instruction(&mut self) -> Instruction {
         let pc = self.program.current();
         let base = self.program.next_byte();
-        let value = match (base >> 4) {
+        let value = match base >> 4 {
             1 | 8 => Some(self.program.next_word()),
             _ => None
         };
         let instruction = Instruction::new(base, value);
         instruction.trace(pc, &self.stack);
-
         instruction
     }
     fn handle_instruction(&mut self, instr: Instruction) {
@@ -111,7 +90,7 @@ impl VirtualMachine {
         self.stack.push(value);
     }
     fn load_local(&mut self, addr: u32) {
-        let value = self.locals[addr as usize];
+        let value = self.current_frame.get_local(addr as usize);
         self.stack.push(value);
     }
     fn store_global(&mut self, addr: u32) {
@@ -120,12 +99,16 @@ impl VirtualMachine {
     }
     fn store_local(&mut self, addr: u32) {
         let value = self.stack.pop();
-        self.locals[addr as usize] = value;
+        self.current_frame.set_local(addr as usize, value);
     }
     fn call(&mut self, addr: u32) {
-        let pc = self.program.current() as u32;
-        self.callstack.push(pc);
+        let pc = self.program.current();
+        self.callstack.push(CallFrame::new(pc));
         self.program.jump_to(addr as usize);
+    }
+    fn ret(&mut self) {
+        let ret = self.callstack.pop().ret;
+        self.program.jump_to(ret);
     }
     fn add(&mut self) {
         let s1 = self.stack.pop() as u32;
@@ -225,10 +208,6 @@ impl VirtualMachine {
     }
     fn jmp(&mut self, addr: u32) {
         self.program.jump_to(addr as usize)
-    }
-    fn ret(&mut self) {
-        let addr = self.callstack.pop();
-        self.program.jump_to(addr as usize);
     }
     fn halt(&mut self) {
         std::process::exit(1);

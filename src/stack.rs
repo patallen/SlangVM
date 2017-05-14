@@ -1,4 +1,5 @@
 use std::fmt;
+use std::collections::BTreeMap;
 
 
 pub struct Stack {
@@ -25,6 +26,46 @@ impl Stack {
 impl fmt::Debug for Stack {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self.space)
+    }
+}
+
+
+pub struct CallFrame {
+    pub ret: usize,
+    locals: BTreeMap<usize, u32>,
+}
+
+impl CallFrame {
+    pub fn new(ret: usize) -> Self {
+        Self {
+            ret: ret,
+            locals: BTreeMap::new(),
+        }
+    }
+    pub fn set_local(&mut self, addr: usize, value: u32) {
+        let cur = self.locals.len();
+        self.locals.insert(addr, value);
+    }
+    pub fn get_local(&mut self, addr: usize) -> u32 {
+        *self.locals.get(&addr).unwrap()
+    }
+}
+
+pub struct CallStack {
+    frames: Vec<CallFrame>,
+}
+
+impl CallStack {
+    pub fn new() -> Self {
+        Self {
+            frames: Vec::new(),
+        }
+    }
+    pub fn push(&mut self, sf: CallFrame) {
+        self.frames.push(sf);
+    }
+    pub fn pop(&mut self) -> CallFrame {
+        self.frames.pop().unwrap()
     }
 }
 
