@@ -6,3 +6,4 @@ authors = ["Patrick Allen <prallen90@gmail.com>"]
 [dependencies]
 log = "*"
 log4rs = "*"
+itertools = "*"
