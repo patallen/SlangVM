@@ -1,15 +1,21 @@
+use std::fmt;
+
 use std::fs::File;
-use std::io::{self, BufRead};
 use std::io::prelude::*;
 
 use std::collections::BTreeMap;
 
 
-#[derive(Debug)]
 struct SourceLine {
     text: String,
     lineno: usize,
     parts: Vec<String>
+}
+
+impl fmt::Debug for SourceLine {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:03}: {: <24} -> {:?}", self.lineno, self.text, self.parts)
+    }
 }
 
 impl SourceLine  {
@@ -53,11 +59,17 @@ impl Assembler {
     }
     pub fn assemble(&mut self) -> Vec<u8> {
         let mut bytecode: Vec<u8> = Vec::new();
+        warn!("Recording labels...");
         self.record_labels();
+        debug!("{: <30?}\n", self.symbols);
+
+        debug!("Generating bytecode...");
         for sl in &self.source {
             let mut bytes = self.parse_line(sl, bytecode.len());
             bytecode.append(&mut bytes);
+            debug!("{:?} ->-> {: <100?}", sl, bytes);
         }
+        debug!("");
         bytecode
     }
     fn record_labels(&mut self) {
@@ -87,13 +99,11 @@ impl Assembler {
                     let mut tmp = match self.symbols.get(&operand) {
                         Some(value) => {
                             if act2.contains("rel") || act2 == "call" {
-                                let mut rel: i32 = 0;
                                 if act2 == "call" {
-                                    rel = *value as i32;
+                                    val_to_bytes(*value as i32)
                                 } else {
-                                    rel = -((addr as i32) - (*value as i32));
+                                    val_to_bytes(-((addr as i32) - (*value as i32)))
                                 }
-                                val_to_bytes(rel)
                             } else {
                                 val_to_bytes(*value as i32)
                             }
