@@ -43,7 +43,6 @@ impl CallFrame {
         }
     }
     pub fn set_local(&mut self, addr: usize, value: u32) {
-        let cur = self.locals.len();
         self.locals.insert(addr, value);
     }
     pub fn get_local(&mut self, addr: usize) -> u32 {
