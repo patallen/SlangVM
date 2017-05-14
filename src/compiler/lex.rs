@@ -1,5 +1,6 @@
 use std::iter::Peekable;
 use std::str::Chars;
+use itertools::Itertools;
 
 
 #[derive(Debug)]
@@ -7,6 +8,8 @@ pub enum Token {
     Ident(String),
     Number(f64),
     Operator(String, u8),
+    LeftParen,
+    RightParen,
 }
 
 enum ConsumeType { Ident, Number }
@@ -21,6 +24,7 @@ impl<'a> Tokenizer<'a> {
         }
     }
     pub fn tokenize(&mut self) -> Vec<Token> {
+        println!("Tokenizing Expression: {}", self.string);
         let mut chars = &mut self.string.chars().peekable();
         let mut tokens: Vec<Token> = Vec::new();
 
@@ -31,20 +35,23 @@ impl<'a> Tokenizer<'a> {
                     '0'...'9'       => tokens.push(consume_number(&mut chars)),
                     '+' | '-'       => tokens.push(Token::Operator(chars.take(1).collect::<String>(), 2)),
                     '*' | '/'       => tokens.push(Token::Operator(chars.take(1).collect::<String>(), 3)),
-                    ' '             => { chars.next(); }
-                    _ => panic!("Syntax Error")
+                    ')'             => {tokens.push(Token::RightParen); chars.take(1).collect::<String>();},
+                    '('             => {tokens.push(Token::LeftParen); chars.take(1).collect::<String>();},
+                    ' '             => { chars.take(1).collect::<String>(); }
+                    _ => panic!("Syntax Error: {} is not a valid character.", ch)
                 },
-                None => {return tokens}
+                None => return tokens
             }
         }
     }
 }
 fn consume_ident(peekable: &mut Peekable<Chars>) -> Token {
-    let ret = peekable.take_while(|x| valid_token_char(x, ConsumeType::Ident)).collect::<String>();
+    let ret = peekable.by_ref().peeking_take_while(|x| valid_token_char(x, ConsumeType::Ident)).collect::<String>();
     Token::Ident(ret)
 }
+
 fn consume_number(peekable: &mut Peekable<Chars>) -> Token {
-    let ret = peekable.take_while(|x| valid_token_char(x, ConsumeType::Number)).collect::<String>();
+    let ret = peekable.by_ref().peeking_take_while(|x| valid_token_char(x, ConsumeType::Number)).collect::<String>();
     Token::Number(ret.parse::<f64>().unwrap())
 }
 
@@ -71,14 +78,20 @@ pub fn shunting_yard(tokens: Vec<Token>) -> Vec<Token> {
             Token::Operator(_, cp) => {
                 match operators.last() {
                     Some(&Token::Operator(_, lp)) => {
-                        if cp > lp {
-                            output.push(operators.pop().unwrap());
-                        }
-                        operators.push(token);
-                    },
-                    _ => {operators.push(token);}
+                        if cp > lp { output.push(operators.pop().unwrap()); }
+                    }, _ => {}
                 };
-            }
+                operators.push(token);
+            },
+            Token::LeftParen => { operators.push(token); },
+            Token::RightParen => {
+                while let Some(operator) = operators.pop() {
+                    match operator {
+                        Token::LeftParen => { break; },
+                        _ => output.push(operator)
+                    }
+                }
+            },
         };
     }
     operators.reverse();
