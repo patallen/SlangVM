@@ -6,7 +6,7 @@ pub enum LabelType {
     Local,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Directive {
     Code,
     Data,

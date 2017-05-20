@@ -1,8 +1,14 @@
-@space
+
 @data
+.numbers: 10 20 30 40
+.empty: 0 0 0 0 0 0 0 0 0 0
+
 @code
 ._entry:
   add                           ; This is a comment
+  'loop:
+  noop
+  jmp 'loop
   store 0                       ; This is also a comment
   call .glabel
   halt

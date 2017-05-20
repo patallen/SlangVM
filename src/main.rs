@@ -34,14 +34,6 @@ fn main() {
     let mut source = String::new();
     let mut file = File::open(&filename).unwrap();
     file.read_to_string(&mut source).unwrap();
-    let mut lexer = Lexer::new(source);
-    let lexed = lexer.lex();
-    println!("{:?}", lexed);
-    // let args: Vec<String> = env::args().collect();
-    // let filename = &args[1];
-    // let mut assembler = Assembler::new(filename);
-    // let bytes = assembler.assemble();
-    // let mut vm = VirtualMachine::new(bytes);
-    // vm.run();
+    let mut assembler = Assembler::new(source);
+    let bytes = assembler.assemble();
 }
-
