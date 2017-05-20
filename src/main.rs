@@ -1,6 +1,9 @@
 extern crate itertools;
 
 #[macro_use]
+extern crate lazy_static;
+
+#[macro_use]
 extern crate log;
 extern crate log4rs;
 extern crate regex;

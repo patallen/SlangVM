@@ -1,5 +1,17 @@
 use regex::Regex;
 
+lazy_static! {
+    static ref REGEX_DIRECTIVE: Regex = Regex::new(r"^@([a-zA-Z]+$)").unwrap();
+    static ref REGEX_GLABEL: Regex = Regex::new(r"^\.\w+:$").unwrap();
+    static ref REGEX_LLABEL: Regex = Regex::new(r"^'\w+:$").unwrap();
+    static ref REGEX_GLABELREF: Regex = Regex::new(r"^\.\w+$").unwrap();
+    static ref REGEX_LLABELREF: Regex = Regex::new(r"^'\w+$").unwrap();
+    static ref REGEX_INSTRUCTION: Regex = Regex::new(r"^[a-zA-Z]+$").unwrap();
+    static ref REGEX_CONSTANT: Regex = Regex::new(r"^-?\d*\.?\d+$").unwrap();
+    static ref REGEX_NEWLINE: Regex = Regex::new(r"^\n$").unwrap();
+    static ref REGEX_COMMENT: Regex = Regex::new(r"^;.+").unwrap();
+}
+
 #[derive(Debug, Clone)]
 pub enum LabelType {
     Global,
@@ -38,33 +50,25 @@ pub enum Token {
 
 impl Token {
     pub fn from_string(string: &str) -> Result<Token, &str> {
-        if Regex::new(r"^@([a-zA-Z]+$)").unwrap().is_match(string) {
+        if REGEX_DIRECTIVE.is_match(string) {
             return Ok(Token::Directive(Directive::from_string(string)))
-        }
-        if Regex::new(r"^\.\w+:$").unwrap().is_match(&string[0..string.len()]){
+        } else if REGEX_GLABEL.is_match(&string[0..string.len()]){
             let ret = &string[0..string.len()-1];
             return Ok(Token::Label(LabelType::Global, ret.to_owned()))
-        }
-        else if Regex::new(r"^'\w+:$").unwrap().is_match(string){
+        } else if REGEX_LLABEL.is_match(string){
             let ret = &string[0..string.len()-1];
             return Ok(Token::Label(LabelType::Local, ret.to_owned()))
-        }
-        else if Regex::new(r"^\.\w+$").unwrap().is_match(string) {
+        } else if REGEX_GLABELREF.is_match(string) {
             return Ok(Token::Reference(LabelType::Global, string.to_owned()))
-        }
-        else if Regex::new(r"^'\w+$").unwrap().is_match(string){
+        } else if REGEX_LLABELREF.is_match(string){
             return Ok(Token::Reference(LabelType::Local, string.to_owned()))
-        }
-        else if Regex::new(r"^[a-zA-Z]+$").unwrap().is_match(string) {
+        } else if REGEX_INSTRUCTION.is_match(string) {
             return Ok(Token::Instruction(string.to_string()))
-        }
-        else if Regex::new(r"^-?\d*\.?\d+$").unwrap().is_match(string){
+        } else if REGEX_CONSTANT.is_match(string){
             return Ok(Token::Constant(string.parse().unwrap()))
-        }
-        else if Regex::new(r"^\n$").unwrap().is_match(string) {
+        } else if REGEX_NEWLINE.is_match(string) {
             return Ok(Token::NewLine)
-        }
-        else if Regex::new(r"^;.+").unwrap().is_match(string) {
+        } else if REGEX_COMMENT.is_match(string) {
             let ret = string.trim_left_matches(';').trim_left();
             return Ok(Token::Comment(ret.to_owned()))
         }
