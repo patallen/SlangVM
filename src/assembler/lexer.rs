@@ -11,7 +11,6 @@ pub enum Directive {
     Code,
     Data,
     Space,
-    Empty
 }
 
 impl Directive {
@@ -20,7 +19,7 @@ impl Directive {
             "@code"  => Directive::Code,
             "@data"  => Directive::Data,
             "@space" => Directive::Space,
-            _ => Directive::Empty
+            _ => panic!("{} is not not a valid directive.", string)
         }
     }
 }
@@ -34,6 +33,7 @@ pub enum Token {
     Constant(i64),
     NewLine,
     Comment(String),
+    Eof,
 }
 
 impl Token {
@@ -72,13 +72,13 @@ impl Token {
     }
 }
 
-pub struct Lexer {
-    source: String,
+pub struct Lexer<'a> {
+    source: &'a String,
     offset: usize,
     base_index: usize,
 }
-impl Lexer {
-    pub fn new(source: String) -> Self {
+impl<'a> Lexer<'a> {
+    pub fn new(source: &'a String) -> Self {
         Lexer {
             source: source,
             offset: 0,
@@ -124,6 +124,7 @@ impl Lexer {
                 Err(_) => panic!("Invalid token '{}'", string),
             }
         }
+        tokens.push(Token::Eof);
         tokens
     }
 }
