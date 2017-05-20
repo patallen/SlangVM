@@ -7,3 +7,4 @@ authors = ["Patrick Allen <prallen90@gmail.com>"]
 log = "*"
 log4rs = "*"
 itertools = "*"
+regex = "*"
