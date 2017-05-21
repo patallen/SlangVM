@@ -77,10 +77,15 @@ impl VirtualMachine {
             Opcode::RelJmpGt => self.rel_jmp_gt(instr.value.unwrap()),
             Opcode::RelJmpLt => self.rel_jmp_lt(instr.value.unwrap()),
             Opcode::Jmp      => self.jmp(instr.value.unwrap()),
+            Opcode::JmpNZ    => self.jmp_nz(instr.value.unwrap()),
             Opcode::Ret      => self.ret(),
             Opcode::Print    => self.print(),
             Opcode::Halt     => self.halt(),
         }
+    }
+    fn jmp_nz(&mut self, value: u32) {
+        let addr = value as usize;
+        if self.stack.pop() != 0 { self.program.jump_to(addr); }
     }
     fn load_const(&mut self, value: u32) {
         self.stack.push(value);
@@ -128,7 +133,7 @@ impl VirtualMachine {
     fn div(&mut self) {
         let s1 = self.stack.pop() as f32;
         let s2 = self.stack.pop() as f32;
-        self.stack.push((s1 / s2) as u32);
+        self.stack.push((s2 / s1) as u32);
     }
     fn pow(&mut self) {
         let s1 = self.stack.pop() as f32;
