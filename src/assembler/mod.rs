@@ -60,27 +60,29 @@ impl Assembler {
         }
     }
     pub fn assemble(&mut self) -> Vec<u8> {
-        let source = &self.source.clone();
-        let mut lexer = Lexer::new(source);
-        let tokens = lexer.lex();
-
+        let tokens = Lexer::new(&self.source.clone()).lex();
         self.load_directives(tokens);
         self.handle_data_section();
+
         let mut datasize = 6;
-        for token in self.directives.get(&Directive::Data).unwrap() {
-            if let &Token::Constant(_) = token { datasize += 4 };
-        }
-        let mut secvec: Vec<GlobalSection> = Vec::new();
-        let sections = self.make_global_sections();
         let mut globals = HashMap::new();
-        for (label, mut section) in sections {
-            globals.insert(label, datasize);
-            section.record_local_info();
-            datasize += section.bytes_size.unwrap();
-            secvec.push(section);
-        }
         for (k, v) in self.globals.clone() {
             globals.insert(k, v + 6);
+        }
+
+        if let Some(data) = self.directives.get(&Directive::Data) {
+            for token in data {
+                if let &Token::Constant(_) = token { datasize += 4 };
+            }
+        }
+
+        let mut secvec: Vec<(GlobalSection, usize)> = Vec::new();
+        for (label, mut section) in self.make_global_sections() {
+            globals.insert(label, datasize);
+            section.record_local_info();
+            let bytesize = section.bytes_size.unwrap();
+            secvec.push((section, datasize));
+            datasize += bytesize;
         }
         let mut bytecode: Vec<u8> = Vec::new();
         bytecode.push(match_instruction("jmp".to_owned()));
@@ -91,7 +93,7 @@ impl Assembler {
         bytecode.append(&mut self.bytecode.clone());
         for section in secvec {
             let mut bytecodes = Vec::new();
-            for tok in &section.tokens {
+            for tok in &section.0.tokens {
                 match tok {
                     &&Token::Reference(LabelType::Global, ref label) => {
                         if let Some(addr) = globals.get(&label.clone()) {
@@ -99,8 +101,9 @@ impl Assembler {
                         } else { panic!("{} is not a known label.", label)}
                     },
                     &&Token::Reference(LabelType::Local, ref label) => {
-                        if let Some(addr) = section.locals.get(&label.clone()) {
-                            bytecodes.append(&mut to_bytes_32(*addr as i64))
+                        if let Some(addr) = section.0.locals.get(&label.clone()) {
+                            let baseaddr = section.1 as i64;
+                            bytecodes.append(&mut to_bytes_32(*addr as i64 + baseaddr))
                         } else { panic!("{} is not a known local label.", label)}
                     },
                     &&Token::Constant(value) => {bytecodes.append(&mut to_bytes_32(value))},
@@ -200,9 +203,9 @@ fn match_instruction(inst: String) -> u8 {
         "noop"        => 0x00,
         "const"       => 0x10,
         "load"        => 0x11,
-        "g_load"      => 0x12,
+        "gload"      => 0x12,
         "store"       => 0x14,
-        "g_store"     => 0x15,
+        "gstore"     => 0x15,
         "call"        => 0x18,
         "dup"         => 0x30,
         "swap"        => 0x31,
@@ -228,6 +231,7 @@ fn match_instruction(inst: String) -> u8 {
         "jmp_rel_gt"  => 0x83,
         "jmp_rel_lt"  => 0x84,
         "jmp"         => 0x88,
+        "jmpnz"       => 0x89,
         "ret"         => 0xA0,
         "print"       => 0xE0,
         "halt"        => 0xF0,
