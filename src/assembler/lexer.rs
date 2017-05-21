@@ -49,7 +49,7 @@ pub enum Token {
 }
 
 impl Token {
-    pub fn from_string(string: &str) -> Result<Token, &str> {
+    pub fn from_string(string: &str) -> Result<Token, String> {
         if REGEX_DIRECTIVE.is_match(string) {
             return Ok(Token::Directive(Directive::from_string(string)))
         } else if REGEX_GLABEL.is_match(&string[0..string.len()]){
@@ -72,7 +72,7 @@ impl Token {
             let ret = string.trim_left_matches(';').trim_left();
             return Ok(Token::Comment(ret.to_owned()))
         }
-        Err("nope")
+        Err(format!("{} did not match any tokens during lexing.", string.clone()))
     }
 }
 
@@ -120,11 +120,8 @@ impl<'a> Lexer<'a> {
         let mut tokens: Vec<Token> = Vec::new();
         while self.base_index < self.source.len() {
             let string = self.next_valid();
-            let token = Token::from_string(string);
-            match token {
-                Ok(tok) => {
-                    tokens.push(tok);
-                },
+            match Token::from_string(string) {
+                Ok(tok) => { tokens.push(tok); },
                 Err(_) => panic!("Invalid token '{}'", string),
             }
         }

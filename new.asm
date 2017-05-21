@@ -5,21 +5,11 @@
 
 @code
 ._entry:
-  add                           ; This is a comment
-  'loop:
-  noop
-  jmp 'loop
-  store 0                       ; This is also a comment
-  call .glabel
+  call .main
+  print
   halt
 
-.glabel:
-  store 0
-  const 1
-  const 10
-  load 0
-  add
-  sub
-  print
+  .main:
+  const .numbers
   ret
 

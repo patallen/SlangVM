@@ -39,4 +39,7 @@ fn main() {
     file.read_to_string(&mut source).unwrap();
     let mut assembler = Assembler::new(source);
     let bytes = assembler.assemble();
+    println!("{:?}", bytes);
+    let mut vm = VirtualMachine::new(bytes);
+    vm.run();
 }
