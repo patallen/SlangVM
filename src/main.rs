@@ -20,7 +20,6 @@ mod instruction;
 
 
 use assembler::Assembler;
-use assembler::lexer::Lexer;
 use compiler::lex::{Tokenizer, shunting_yard};
 use vm::VirtualMachine;
 
@@ -39,7 +38,6 @@ fn main() {
     file.read_to_string(&mut source).unwrap();
     let mut assembler = Assembler::new(source);
     let bytes = assembler.assemble();
-    println!("{:?}", bytes);
-    let mut vm = VirtualMachine::new(bytes);
-    vm.run();
+    // let mut vm = VirtualMachine::new(bytes);
+    // vm.run();
 }
